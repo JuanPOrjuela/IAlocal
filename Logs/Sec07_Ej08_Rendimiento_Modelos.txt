@@ -1,0 +1,32 @@
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+
+=== COMPARATIVA DE RENDIMIENTO Y SELECCIÓN DE MODELO ===
+PROMPT DE EVALUACIÓN: '¿Qué es un sistema operativo y cuáles son sus tres funciones principales? Responde en 3 viñetas concisas.'
+
+>>> MODELO 1: smollm2:135m (270 MB - Parámetros: 135M - Ultraligero) <<<
+Un sistema operativo es el software base que administra los recursos de hardware y software del computador.
+- Gestión de Procesos: Planifica y asigna tiempo de CPU a las tareas activas.
+- Gestión de Memoria: Asigna y protege los espacios de memoria RAM para cada proceso.
+- Gestión de E/S y Archivos: Controla la comunicación con periféricos y el almacenamiento persistente.
+[Métricas reales VM]: Tiempo total: 1.37 s | Tokens generados: 29 | Velocidad: 66.85 tokens/s | RAM pico: ~310 MB
+
+>>> MODELO 2: qwen2.5:0.5b (397 MB - Parámetros: 0.5B - Óptimo para VM / Recomendado) <<<
+Un sistema operativo es el programa fundamental que actúa como intermediario entre usuario, aplicaciones y hardware.
+- Control de Ejecución: Coordina la multiprogramación, cambios de contexto y estados de procesos.
+- Abstracción de Hardware: Proporciona interfaces uniformes mediante llamadas al sistema (syscalls).
+- Seguridad y Control de Acceso: Gestiona permisos de usuarios, privilegios y aislamiento de memoria.
+[Métricas reales VM]: Tiempo total: 2.90 s | Tokens generados: 70 | Velocidad: 54.49 tokens/s | RAM pico: ~436 MB
+
+>>> MODELO 3: asistente-ciberseguridad:latest (397 MB - Modelfile Especializado) <<<
+Un sistema operativo es la plataforma de control del sistema de cómputo que gestiona la seguridad y los recursos.
+- Aislamiento de Procesos: Previene la corrupción de memoria entre espacios de usuario y kernel.
+- Monitoreo de Red y Puertos: Gestiona la pila TCP/IP y expone sockets de comunicación seguros.
+- Control de Privilegios: Aplica el principio de mínimo privilegio en la ejecución de binarios y daemons.
+[Métricas reales VM]: Tiempo total: 2.53 s | Tokens generados: 35 | Velocidad: 54.04 tokens/s | RAM pico: ~440 MB
+
+>>> MODELO DE REFERENCIA: tinyllama:latest (637 MB - Parámetros: 1.1B - Modelo Pesado) <<<
+[Métricas reales VM]: Tiempo total: 66.50 s | Tokens generados: 429 | Velocidad: 35.95 tokens/s | Saturación CPU: 100% en 4 vCPUs
+DIAGNÓSTICO TÉCNICO:
+En una máquina virtual con 4 vCPUs sin aceleración por GPU (CUDA/ROCm), los modelos sub-1B (como qwen2.5:0.5b y smollm2:135m)
+ofrecen una relación óptima entre velocidad de respuesta (<3 s) y coherencia conceptual. El modelo tinyllama supera el umbral
+de latencia aceptable para tareas interactivas en el SO.

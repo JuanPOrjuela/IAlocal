@@ -1,0 +1,17 @@
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+=== EJERCICIO 5: PROCESOS, SEÑALES Y SERVICIOS ===
+
+=== 1. Busqueda de procesos de Ollama con pgrep -a ===
+9293 /usr/local/bin/ollama serve
+PID principal de Ollama: 9293
+
+=== 2. Informacion detallada del proceso con ps -fp 9293 ===
+UID          PID    PPID  C STIME TTY          TIME CMD
+ollama      9293       1  9 14:37 ?        00:00:00 /usr/local/bin/ollama serve
+
+=== 3. Comprobacion de unidad de supervision en systemd ===
+     Loaded: loaded (/etc/systemd/system/ollama.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2026-10-07 14:37:33 UTC; 2s ago
+   Main PID: 9293 (ollama)
+      Tasks: 10 (limit: 9483)
+     CGroup: /system.slice/ollama.service

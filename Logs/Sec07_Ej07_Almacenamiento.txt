@@ -1,0 +1,23 @@
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+=== EJERCICIO 7: ALMACENAMIENTO DE MODELOS ===
+
+=== 1. Espacio en disco de particion raiz (df -h /) ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        48G  7.6G   40G  16% /
+
+=== 2. Modelos instalados localmente (ollama list) ===
+NAME                               ID              SIZE      MODIFIED    
+ciber-t01:latest                   f588173b64e1    397 MB    9 hours ago    
+ciber-t07:latest                   12ad16b9eba7    397 MB    9 hours ago    
+ciber-t10:latest                   6dc93f3124e8    397 MB    9 hours ago    
+asistente-ciberseguridad:latest    408358f46b82    397 MB    9 hours ago    
+tinyllama:latest                   2644915ede35    637 MB    12 days ago    
+qwen2.5:0.5b                       a8b0c5157701    397 MB    12 days ago    
+smollm2:135m                       9077fe9d2ae1    270 MB    12 days ago    
+
+=== 3. Almacenamiento fisico en directorio de Ollama ===
+1.3G	/usr/share/ollama/.ollama/models/blobs
+68K	/usr/share/ollama/.ollama/models/manifests
+20K	/usr/share/ollama/.ollama/models/metadata
+Total acumulado en models:
+1.3G	/usr/share/ollama/.ollama/models
