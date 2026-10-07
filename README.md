@@ -71,6 +71,9 @@ En un entorno virtualizado configurado entre 6 GB y 8 GB de RAM asignada, se pri
 * **Red:** Interfaz NAT con reenvío de puertos `2222 -> 22` (SSH) y `11434 -> 11434` (Ollama REST API).
 * **Entorno Gráfico:** XFCE Desktop (`xubuntu-core`) + LightDM autologin + VirtualBox Guest Additions.
 
+### Entorno Gráfico del Sistema Operativo en Vivo
+![Entorno de Escritorio XFCE en VirtualBox](Screenshots/Sec07_VM_Desktop_Final.png)
+
 ### Matriz de Viabilidad Técnica
 
 | Categoría de IA Local | Viabilidad | Diagnóstico y Consideraciones de Sistemas Operativos |
@@ -85,17 +88,27 @@ En un entorno virtualizado configurado entre 6 GB y 8 GB de RAM asignada, se pri
 
 ## 5. Síntesis Técnica: Sección 07 — Ejercicios Prácticos del Taller (Ejercicios 1 al 10)
 
-En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios prácticos requeridos por la guía de laboratorio, conectando la operación del sistema operativo Linux con el ciclo de vida de los modelos de IA:
+En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios prácticos requeridos por la guía de laboratorio, conectando la operación del sistema operativo Linux con el ciclo de vida de los modelos de IA. A continuación se presentan los resultados y las capturas visuales de cada ejercicio:
+
+---
 
 ### Ejercicio 1 · Identificación del Sistema Operativo
 * **Comandos:** `lsb_release -a`, `uname -a`, `lscpu`, `free -h`, `lsblk`, `df -h /`.
 * **Hallazgos:** Se auditó la máquina virtual identificando Ubuntu 24.04.5 LTS, kernel 6.8, arquitectura x86_64, 4 vCPUs, 7.8 GiB de RAM y partición raíz con 41 GiB disponibles.
-* **Evidencias:** [Log Sec07_Ej01](Logs/Sec07_Ej01_Identificacion_SO.txt) | [Captura Sec07_Ej01](Screenshots/Sec07_Ej01_Identificacion_SO.png).
+* **Log:** [Logs/Sec07_Ej01_Identificacion_SO.txt](Logs/Sec07_Ej01_Identificacion_SO.txt)
+
+![Ejercicio 1 · Identificación del Sistema Operativo](Screenshots/Sec07_Ej01_Identificacion_SO.png)
+
+---
 
 ### Ejercicio 2 · Gestión de Paquetes
 * **Comandos:** `sudo apt update`, `apt policy htop curl git`.
 * **Hallazgos:** Verificación del árbol de repositorios APT de Ubuntu Noble. Se confirmaron las versiones instaladas y candidatas de las utilidades esenciales de diagnóstico.
-* **Evidencias:** [Log Sec07_Ej02](Logs/Sec07_Ej02_Gestion_Paquetes.txt) | [Captura Sec07_Ej02](Screenshots/Sec07_Ej02_Gestion_Paquetes.png).
+* **Log:** [Logs/Sec07_Ej02_Gestion_Paquetes.txt](Logs/Sec07_Ej02_Gestion_Paquetes.txt)
+
+![Ejercicio 2 · Gestión de Paquetes](Screenshots/Sec07_Ej02_Gestion_Paquetes.png)
+
+---
 
 ### Ejercicio 3 · Procesos Antes y Después de la IA
 * **Comandos:** `free -h`, `ps aux --sort=-%cpu | head`, `ps aux --sort=-%mem | head`, ejecución de inferencia en background.
@@ -103,12 +116,20 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
   - *En reposo:* Memoria usada 930 MB, CPU desahogada (<1%).
   - *Durante inferencia:* El proceso de Ollama eleva el uso de CPU hasta un 98-100% momentáneo sobre los hilos activos y reserva ~400 MB adicionales para la carga de tensores.
   - *Post-inferencia:* La memoria se mantiene en buffers/cache y el procesador regresa inmediatamente a reposo tras el cambio de contexto.
-* **Evidencias:** [Log Sec07_Ej03](Logs/Sec07_Ej03_Procesos_Recursos.txt) | [Captura Sec07_Ej03](Screenshots/Sec07_Ej03_Procesos_Recursos.png).
+* **Log:** [Logs/Sec07_Ej03_Procesos_Recursos.txt](Logs/Sec07_Ej03_Procesos_Recursos.txt)
+
+![Ejercicio 3 · Procesos y Recursos (Reposo vs Carga)](Screenshots/Sec07_Ej03_Procesos_Recursos.png)
+
+---
 
 ### Ejercicio 4 · Administración del Servicio Ollama con Systemd
 * **Comandos:** `systemctl status ollama`, `systemctl stop ollama`, prueba con `curl http://127.0.0.1:11434/api/tags`, `systemctl start ollama`, `journalctl -u ollama -n 15`.
 * **Hallazgos:** Al detener la unidad `ollama.service`, el kernel cierra el socket de escucha TCP 11434 y las conexiones son rechazadas de inmediato (`Connection refused`). Al reiniciar el servicio, systemd restaura el daemon, el socket vuelve a responder en 127.0.0.1 y journalctl registra la inicialización de los controladores y extensiones de CPU.
-* **Evidencias:** [Log Sec07_Ej04](Logs/Sec07_Ej04_Servicio_Systemd.txt) | [Captura Sec07_Ej04](Screenshots/Sec07_Ej04_Servicio_Systemd.png).
+* **Log:** [Logs/Sec07_Ej04_Servicio_Systemd.txt](Logs/Sec07_Ej04_Servicio_Systemd.txt)
+
+![Ejercicio 4 · Administración del Servicio Ollama](Screenshots/Sec07_Ej04_Servicio_Systemd.png)
+
+---
 
 ### Ejercicio 5 · Procesos, Señales y Servicios
 * **Comandos:** `pgrep -a ollama`, `ps -fp <PID>`, análisis de señales.
@@ -116,17 +137,29 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
   - `SIGTERM (15)`: Solicita al daemon una terminación limpia, cerrando sockets abiertos, liberando memoria de modelos y vaciando buffers.
   - `SIGKILL (9)`: El kernel destruye el proceso de forma inmediata sin permitir limpieza de recursos.
   - *Comportamiento de supervisión:* Al estar configurado bajo systemd con directiva de recuperación automática (`Restart=always`), si el proceso recibe un SIGKILL, el supervisor del init detecta la muerte inesperada del hijo e instancia de inmediato un nuevo proceso con un nuevo PID.
-* **Evidencias:** [Log Sec07_Ej05](Logs/Sec07_Ej05_Procesos_Senales.txt) | [Captura Sec07_Ej05](Screenshots/Sec07_Ej05_Procesos_Senales.png).
+* **Log:** [Logs/Sec07_Ej05_Procesos_Senales.txt](Logs/Sec07_Ej05_Procesos_Senales.txt)
+
+![Ejercicio 5 · Procesos, Señales y Servicios](Screenshots/Sec07_Ej05_Procesos_Senales.png)
+
+---
 
 ### Ejercicio 6 · Red y Puerto de Ollama
 * **Comandos:** `ss -lntp | grep 11434`, `curl http://127.0.0.1:11434/api/tags`, `ip -br addr`.
 * **Hallazgos:** El socket de Ollama escucha por defecto exclusivamente en la interfaz loopback (`127.0.0.1:11434`). Esta decisión de diseño del SO minimiza la superficie de ataque, impidiendo que otros nodos de la red local interactúen con la API a menos que se configure conscientemente `0.0.0.0` o un proxy inverso con autenticación.
-* **Evidencias:** [Log Sec07_Ej06](Logs/Sec07_Ej06_Red_Puerto.txt) | [Captura Sec07_Ej06](Screenshots/Sec07_Ej06_Red_Puerto.png).
+* **Log:** [Logs/Sec07_Ej06_Red_Puerto.txt](Logs/Sec07_Ej06_Red_Puerto.txt)
+
+![Ejercicio 6 · Red y Puerto de Ollama](Screenshots/Sec07_Ej06_Red_Puerto.png)
+
+---
 
 ### Ejercicio 7 · Almacenamiento de Modelos
 * **Comandos:** `df -h /`, `ollama list`, `sudo du -sh /usr/share/ollama/.ollama/models/*`.
 * **Hallazgos:** Los modelos se almacenan de manera modular en `/usr/share/ollama/.ollama/models/blobs` utilizando hashes criptográficos `sha256`. Este diseño permite deduplicación de capas compartidas (similar a Docker), optimizando el uso del almacenamiento en disco ext4.
-* **Evidencias:** [Log Sec07_Ej07](Logs/Sec07_Ej07_Almacenamiento.txt) | [Captura Sec07_Ej07](Screenshots/Sec07_Ej07_Almacenamiento.png).
+* **Log:** [Logs/Sec07_Ej07_Almacenamiento.txt](Logs/Sec07_Ej07_Almacenamiento.txt)
+
+![Ejercicio 7 · Almacenamiento de Modelos](Screenshots/Sec07_Ej07_Almacenamiento.png)
+
+---
 
 ### Ejercicio 8 · Rendimiento y Selección del Modelo
 * **Evaluación Comparativa:**
@@ -134,36 +167,69 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
   - `qwen2.5:0.5b` (397 MB): Tiempo 2.90 s | 70 tokens | **54.49 tokens/s** (*Modelo recomendado por calidad/velocidad*).
   - `asistente-ciberseguridad:latest` (397 MB): Tiempo 2.53 s | 35 tokens | **54.04 tokens/s**.
   - `tinyllama:latest` (637 MB - 1.1B): Tiempo 66.50 s | 429 tokens | **35.95 tokens/s** (*Saturación de CPU sostenida*).
-* **Diagnóstico:** En una máquina virtual sin aceleración GPU, los modelos sub-1B proporcionan la latencia requerida para interactividad fluida.
-* **Evidencias:** [Log Sec07_Ej08](Logs/Sec07_Ej08_Rendimiento_Modelos.txt) | [Captura Sec07_Ej08](Screenshots/Sec07_Ej08_Rendimiento_Modelos.png).
+* **Diagnóstico:** En una máquina virtual sin aceleración GPU, los modelos sub-1B proporcionan la latencia requerida para interactividad fluida (<3 s).
+* **Log:** [Logs/Sec07_Ej08_Rendimiento_Modelos.txt](Logs/Sec07_Ej08_Rendimiento_Modelos.txt)
+
+![Ejercicio 8 · Rendimiento y Selección del Modelo](Screenshots/Sec07_Ej08_Rendimiento_Modelos.png)
+
+---
 
 ### Ejercicio 9 · Automatización con Bash
 * **Script Desarrollado:** [`Scripts/reporte_sistema.sh`](Scripts/reporte_sistema.sh).
 * **Funcionalidad:** Automatiza la recolección de fecha, hostname, kernel, CPU, memoria RAM, espacio en disco y estado del daemon de Ollama, generando el archivo [`Logs/reporte.txt`](Logs/reporte.txt).
-* **Evidencias:** [Log Sec07_Ej09](Logs/Sec07_Ej09_Automatizacion_Bash.txt) | [Captura Sec07_Ej09](Screenshots/Sec07_Ej09_Automatizacion_Bash.png).
+* **Log:** [Logs/Sec07_Ej09_Automatizacion_Bash.txt](Logs/Sec07_Ej09_Automatizacion_Bash.txt)
+
+![Ejercicio 9 · Automatización con Bash](Screenshots/Sec07_Ej09_Automatizacion_Bash.png)
+
+---
 
 ### Ejercicio 10 · IA como Herramienta de Apoyo y Validación Crítica
 * **Diagnóstico del LLM:** El modelo analizó las métricas del sistema reportando una salud general óptima y bajo consumo de recursos.
 * **Validación Crítica Humana (Obligatoria):**
   - La IA consideró que tener **0 B de memoria Swap** no era problemático dado que existían 5.3 GB libres de RAM física.
   - *Refutación técnica del estudiante:* Esta conclusión ignora que las inferencias de LLMs generan picos dinámicos de consumo. Sin un espacio de intercambio configurado, cualquier desbordamiento de memoria activa inmediatamente el **OOM-Killer (Out-Of-Memory Killer)** del kernel Linux, liquidando procesos críticos. Por tanto, es mandatorio aprovisionar un swapfile de al menos 4 GB en el sistema operativo.
-* **Evidencias:** [Log Sec07_Ej10](Logs/Sec07_Ej10_IA_Diagnostico_SO.txt) | [Captura Sec07_Ej10](Screenshots/Sec07_Ej10_IA_Diagnostico_SO.png).
+* **Log:** [Logs/Sec07_Ej10_IA_Diagnostico_SO.txt](Logs/Sec07_Ej10_IA_Diagnostico_SO.txt)
+
+![Ejercicio 10 · IA como Apoyo al Diagnóstico y Validación Crítica](Screenshots/Sec07_Ej10_IA_Diagnostico_SO.png)
 
 ---
 
-## 6. Estructura del Repositorio y Entregables del Taller
+## 6. Evidencias de Fases Anteriores (Secciones 02 a 05)
+
+A continuación se incluyen las evidencias visuales de auditoría de hardware, despliegue de paquetes, configuración de red y ejecución de modelos:
+
+### Auditoría de Hardware y Recursos (Sección 02)
+| CPU y Memoria RAM | Disco y Sistema de Archivos |
+| :---: | :---: |
+| ![CPU y RAM](Screenshots/Sec02_01_CPU_RAM.png) | ![Disco y Particiones](Screenshots/Sec02_02_Disco_SistemaArchivos.png) |
+
+### Instalación de Herramientas y Ollama (Sección 03)
+| Herramientas Base (curl, htop, git) | Instalación de Ollama | Verificación API (/api/tags) |
+| :---: | :---: | :---: |
+| ![Instalación Base](Screenshots/Sec03_01_Instalacion_Herramientas.png) | ![Instalación Ollama](Screenshots/Sec03_02_Instalacion_Ollama.png) | ![API Tags](Screenshots/Sec03_03_Servicio_API_Tags.png) |
+
+### Administración del Servicio y Red (Sección 04)
+| Reinicio y Logs Systemd | Red y Puerto 11434 | Recursos en Reposo |
+| :---: | :---: | :---: |
+| ![Logs Systemd](Screenshots/Sec04_01_Servicio_Restart_Logs.png) | ![Red Puerto 11434](Screenshots/Sec04_02_Red_Puerto11434.png) | ![Recursos Reposo](Screenshots/Sec04_03_Recursos_Reposo.png) |
+
+### Despliegue y Administración de Modelos (Sección 05)
+| Descarga SmolLM2 | Descarga Qwen 2.5 | Administración (cp, stop, rm) |
+| :---: | :---: | :---: |
+| ![SmolLM2](Screenshots/Sec05_01_Pull_SmolLM2.png) | ![Qwen 2.5](Screenshots/Sec05_03_Pull_Qwen.png) | ![Admin Modelos](Screenshots/Sec05_07_Admin_Show_CP_Stop_RM.png) |
+
+---
+
+## 7. Estructura del Repositorio y Entregables del Taller
 
 ```text
-├── Informe_Taller_IA_Local_Sistemas_Operativos.pdf  # Informe técnico de 16 páginas
+├── Informe_Taller_IA_Local_Sistemas_Operativos.pdf  # Informe técnico formal
 ├── Modelfiles/                                      # Archivos Modelfile de personalización de IA
 │   ├── Modelfile                                    # Asistente académico de ciberseguridad
 │   ├── Modelfile.t01                                # Variante Temperatura 0.1 (Determinista)
 │   ├── Modelfile.t07                                # Variante Temperatura 0.7 (Balanceada)
 │   └── Modelfile.t10                                # Variante Temperatura 1.0 (Creativa)
 ├── Screenshots/                                     # Evidencias visuales de la VM y terminal
-│   ├── 01_Ubuntu_Hardware_Audit.png
-│   ├── ...
-│   ├── 16_Custom_Model_Create_Run.png
 │   ├── Sec07_Ej01_Identificacion_SO.png             # Ejercicio 1: Hardware y SO
 │   ├── Sec07_Ej02_Gestion_Paquetes.png              # Ejercicio 2: Paquetería APT
 │   ├── Sec07_Ej03_Procesos_Recursos.png             # Ejercicio 3: CPU y RAM con carga
@@ -174,8 +240,8 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
 │   ├── Sec07_Ej08_Rendimiento_Modelos.png           # Ejercicio 8: Benchmarking modelos
 │   ├── Sec07_Ej09_Automatizacion_Bash.png           # Ejercicio 9: Script de monitoreo
 │   ├── Sec07_Ej10_IA_Diagnostico_SO.png             # Ejercicio 10: Diagnóstico y validación
-│   ├── Sec07_VM_Desktop_Live.png                    # Captura en vivo del escritorio XFCE
-│   └── Sec07_VM_Desktop_Final.png                   # Captura final de la VM en VirtualBox
+│   ├── Sec07_VM_Desktop_Final.png                   # Captura final de la VM en VirtualBox
+│   └── ... (evidencias de Fases 01 a 06)
 ├── Scripts/                                         # Scripts de automatización y auditoría
 │   ├── reporte_sistema.sh                           # Script Bash del Ejercicio 9
 │   ├── generate_report_pdf.py                       # Generador del informe PDF formal
@@ -199,7 +265,7 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
 
 ---
 
-## 7. Estado Actual de Avance del Laboratorio
+## 8. Estado Actual de Avance del Laboratorio
 
 | Fase / Sección | Estado | Descripción técnica |
 | :--- | :---: | :--- |
@@ -210,7 +276,7 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
 | **04 · Administración de Servicio** | **Completado** | Control con `systemctl`, inspección de sockets con `ss -lntp` y logs con `journalctl`. |
 | **05 · Modelos y Benchmarking** | **Completado** | Despliegue de `smollm2:135m`, `qwen2.5:0.5b` y `tinyllama:latest`. Pruebas de inferencia y administración (`show`, `cp`, `stop`, `rm`). |
 | **06 · Modelfile Personalizado** | **Completado** | Construcción de `asistente-ciberseguridad` y variantes de temperatura (`0.1`, `0.7`, `1.0`). |
-| **07 · Ejercicios Prácticos (1-10)** | **Completado** | 10 ejercicios de procesos, señales, red, scripts Bash, benchmarking e interpretación con IA. |
+| **07 · Ejercicios Prácticos (1-10)** | **Completado** | 10 ejercicios de procesos, señales, red, scripts Bash, benchmarking e interpretación con IA (con capturas inline). |
 | **08-15 · API, Web UI, Seguridad** | *Pendiente* | Endpoints REST, interfaz web HTML/JS, análisis de capturas Wireshark y proyecto final. |
 
 ---
