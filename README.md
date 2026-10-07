@@ -194,7 +194,72 @@ En esta fase se ejecutaron, validaron y documentaron los 10 ejercicios práctico
 
 ---
 
-## 6. Evidencias de Fases Anteriores (Secciones 02 a 05)
+## 6. Síntesis Técnica: Sección 08 — API REST de Ollama (/api/tags, /api/generate, /api/chat)
+
+La API REST de Ollama permite desacoplar el motor de inferencia de la interfaz de usuario, exponiendo endpoints HTTP estándar sobre el puerto 11434. Se configuró el servicio del sistema operativo mediante un *drop-in override* de systemd (`/etc/systemd/system/ollama.service.d/override.conf`) con `OLLAMA_HOST=0.0.0.0:11434` y `OLLAMA_ORIGINS=*`, permitiendo tanto consultas locales dentro de Ubuntu como peticiones remotas desde el sistema anfitrión Windows mediante el reenvío de puertos NAT de VirtualBox.
+
+---
+
+### Prueba 1 · Inspección del Catálogo y Sockets de Red (`GET /api/tags`)
+* **Objetivo:** Comprobar la exposición del socket TCP en todas las interfaces de red (`0.0.0.0:11434`) y listar los modelos disponibles vía HTTP.
+* **Comandos:**
+  - *Ubuntu:* `ss -lntp | grep 11434` y `curl -s http://localhost:11434/api/tags | python3 -m json.tool`
+  - *Windows Host:* `Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -Method Get`
+* **Hallazgos:** Se constata la interoperabilidad transparente entre el Host Windows y la VM Ubuntu. El endpoint devuelve un arreglo JSON con los modelos instalados (`smollm2:135m`, `qwen2.5:0.5b`, `asistente-ciberseguridad`, `tinyllama`), sus identificadores criptográficos `digest` y metadatos de arquitectura GGUF.
+* **Log:** [Logs/Sec08_01_API_Tags_Endpoints.txt](Logs/Sec08_01_API_Tags_Endpoints.txt)
+
+![Prueba 1 · Endpoint GET /api/tags y Sockets](Screenshots/Sec08_01_API_Tags_Endpoints.png)
+
+---
+
+### Prueba 2 · Inferencia Básica con `/api/generate` (cURL y PowerShell)
+* **Objetivo:** Ejecutar una consulta directa mediante payload JSON con el parámetro `"stream": false`.
+* **Prompt Evaluado:** *"¿Qué es ciberseguridad? Responde en una sola frase concisa."*
+* **Modelo Utilizado:** `qwen2.5:0.5b`
+* **Comandos:**
+  - *cURL:* `curl http://localhost:11434/api/generate -d '{"model": "qwen2.5:0.5b", "prompt": "...", "stream": false}'`
+  - *PowerShell:* `Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/generate" -Method Post -Body $body`
+* **Respuesta del Modelo:** *"Ciberseguridad es el arte y la ciencia de proteger los sistemas, aplicaciones, redes y datos de la información digital contra accesos no autorizados y amenazas cibernéticas."*
+* **Métricas Registradas:** Tiempo total: **2.15 s** | Tokens generados: 31 | Velocidad: **52.8 tokens/s**.
+* **Log:** [Logs/Sec08_02_API_Generate_cURL_PS.txt](Logs/Sec08_02_API_Generate_cURL_PS.txt)
+
+![Prueba 2 · Endpoint POST /api/generate](Screenshots/Sec08_02_API_Generate_cURL_PS.png)
+
+---
+
+### Prueba 3 · Diálogo Estructurado por Roles con `/api/chat`
+* **Objetivo:** Validar el endpoint conversacional que preserva el contexto de roles (`system`, `user`, `assistant`) y evalúa el Modelfile especializado.
+* **Mensaje Enviado:** `[{"role": "user", "content": "¿Qué es un firewall? Responde de forma técnica y concisa en 3 viñetas."}]`
+* **Modelo Utilizado:** `asistente-ciberseguridad:latest`
+* **Comandos:**
+  - *cURL:* `curl http://localhost:11434/api/chat -d '{"model": "asistente-ciberseguridad", "messages": [...], "stream": false}'`
+  - *PowerShell:* `Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/chat" -Method Post -Body $chatBody`
+* **Respuesta Obtenida:**
+  - *Definición Técnica:* Dispositivo o módulo de software que inspecciona el tráfico de red según reglas predefinidas.
+  - *Mecanismo Operativo:* Opera en capas 3, 4 y 7 (OSI), filtrando paquetes TCP/IP y manteniendo tablas de estado (Stateful Inspection).
+  - *Consideración de Seguridad:* Primera línea perimetral de defensa en sistemas operativos y redes frente a intrusiones externas.
+* **Métricas Registradas:** Tiempo total: **1.61 s** | Tokens generados: 60 | Velocidad: **54.04 tokens/s**.
+* **Log:** [Logs/Sec08_03_API_Chat_cURL_PS.txt](Logs/Sec08_03_API_Chat_cURL_PS.txt)
+
+![Prueba 3 · Endpoint POST /api/chat con Roles](Screenshots/Sec08_03_API_Chat_cURL_PS.png)
+
+---
+
+### Prueba 4 · Análisis Forense de Metadatos y Estructura JSON
+* **Objetivo:** Desglosar técnicamente los campos devueltos por el motor de inferencia en la respuesta HTTP:
+  1. `model`: Nombre y versión del modelo en ejecución.
+  2. `total_duration`: Tiempo total de procesamiento desde el socket HTTP hasta la respuesta (1,617 ms).
+  3. `load_duration`: Tiempo requerido por el kernel para mapear los tensores a memoria virtual RAM (1,361 ms en arranque frío; sub-50 ms en caliente).
+  4. `prompt_eval_count` / `prompt_eval_duration`: Tokens del prompt procesados en paralelo (117 tokens de contexto/sistema).
+  5. `eval_count` / `eval_duration`: Tokens generados en fase autorregresiva (60 tokens a 54.04 tok/s).
+  6. `done`: Indicador de finalización exitosa del stream.
+* **Log:** [Logs/Sec08_04_Metricas_Analisis_JSON.txt](Logs/Sec08_04_Metricas_Analisis_JSON.txt)
+
+![Prueba 4 · Análisis Forense de Metadatos JSON](Screenshots/Sec08_04_Metricas_Analisis_JSON.png)
+
+---
+
+## 7. Evidencias de Fases Anteriores (Secciones 02 a 05)
 
 A continuación se incluyen las evidencias visuales de auditoría de hardware, despliegue de paquetes, configuración de red y ejecución de modelos:
 
@@ -220,7 +285,7 @@ A continuación se incluyen las evidencias visuales de auditoría de hardware, d
 
 ---
 
-## 7. Estructura del Repositorio y Entregables del Taller
+## 8. Estructura del Repositorio y Entregables del Taller
 
 ```text
 ├── Informe_Taller_IA_Local_Sistemas_Operativos.pdf  # Informe técnico formal
@@ -230,17 +295,12 @@ A continuación se incluyen las evidencias visuales de auditoría de hardware, d
 │   ├── Modelfile.t07                                # Variante Temperatura 0.7 (Balanceada)
 │   └── Modelfile.t10                                # Variante Temperatura 1.0 (Creativa)
 ├── Screenshots/                                     # Evidencias visuales de la VM y terminal
-│   ├── Sec07_Ej01_Identificacion_SO.png             # Ejercicio 1: Hardware y SO
-│   ├── Sec07_Ej02_Gestion_Paquetes.png              # Ejercicio 2: Paquetería APT
-│   ├── Sec07_Ej03_Procesos_Recursos.png             # Ejercicio 3: CPU y RAM con carga
-│   ├── Sec07_Ej04_Servicio_Systemd.png              # Ejercicio 4: Control de Systemd
-│   ├── Sec07_Ej05_Procesos_Senales.png              # Ejercicio 5: Señales y supervisión
-│   ├── Sec07_Ej06_Red_Puerto.png                    # Ejercicio 6: Socket TCP 11434
-│   ├── Sec07_Ej07_Almacenamiento.png                # Ejercicio 7: Modelos y blobs
-│   ├── Sec07_Ej08_Rendimiento_Modelos.png           # Ejercicio 8: Benchmarking modelos
-│   ├── Sec07_Ej09_Automatizacion_Bash.png           # Ejercicio 9: Script de monitoreo
-│   ├── Sec07_Ej10_IA_Diagnostico_SO.png             # Ejercicio 10: Diagnóstico y validación
-│   ├── Sec07_VM_Desktop_Final.png                   # Captura final de la VM en VirtualBox
+│   ├── Sec08_01_API_Tags_Endpoints.png             # Sección 8: Endpoint /api/tags y sockets
+│   ├── Sec08_02_API_Generate_cURL_PS.png           # Sección 8: /api/generate cURL y PowerShell
+│   ├── Sec08_03_API_Chat_cURL_PS.png               # Sección 8: /api/chat estructurado por roles
+│   ├── Sec08_04_Metricas_Analisis_JSON.png         # Sección 8: Desglose de metadatos JSON
+│   ├── Sec07_Ej01_Identificacion_SO.png             # Sección 7: Ejercicio 1 (Hardware y SO)
+│   ├── ... (Sec07 Ejercicios 02 al 10)
 │   └── ... (evidencias de Fases 01 a 06)
 ├── Scripts/                                         # Scripts de automatización y auditoría
 │   ├── reporte_sistema.sh                           # Script Bash del Ejercicio 9
@@ -250,22 +310,17 @@ A continuación se incluyen las evidencias visuales de auditoría de hardware, d
 │   ├── run_section04_admin.py
 │   └── run_section05_models.py
 └── Logs/                                            # Salidas crudas de comandos del sistema
+    ├── Sec08_01_API_Tags_Endpoints.txt
+    ├── Sec08_02_API_Generate_cURL_PS.txt
+    ├── Sec08_03_API_Chat_cURL_PS.txt
+    ├── Sec08_04_Metricas_Analisis_JSON.txt
     ├── reporte.txt                                  # Salida generada por reporte_sistema.sh
-    ├── Sec07_Ej01_Identificacion_SO.txt
-    ├── Sec07_Ej02_Gestion_Paquetes.txt
-    ├── Sec07_Ej03_Procesos_Recursos.txt
-    ├── Sec07_Ej04_Servicio_Systemd.txt
-    ├── Sec07_Ej05_Procesos_Senales.txt
-    ├── Sec07_Ej06_Red_Puerto.txt
-    ├── Sec07_Ej07_Almacenamiento.txt
-    ├── Sec07_Ej08_Rendimiento_Modelos.txt
-    ├── Sec07_Ej09_Automatizacion_Bash.txt
-    └── Sec07_Ej10_IA_Diagnostico_SO.txt
+    └── ... (Logs Sec07 del 01 al 10)
 ```
 
 ---
 
-## 8. Estado Actual de Avance del Laboratorio
+## 9. Estado Actual de Avance del Laboratorio
 
 | Fase / Sección | Estado | Descripción técnica |
 | :--- | :---: | :--- |
@@ -276,8 +331,9 @@ A continuación se incluyen las evidencias visuales de auditoría de hardware, d
 | **04 · Administración de Servicio** | **Completado** | Control con `systemctl`, inspección de sockets con `ss -lntp` y logs con `journalctl`. |
 | **05 · Modelos y Benchmarking** | **Completado** | Despliegue de `smollm2:135m`, `qwen2.5:0.5b` y `tinyllama:latest`. Pruebas de inferencia y administración (`show`, `cp`, `stop`, `rm`). |
 | **06 · Modelfile Personalizado** | **Completado** | Construcción de `asistente-ciberseguridad` y variantes de temperatura (`0.1`, `0.7`, `1.0`). |
-| **07 · Ejercicios Prácticos (1-10)** | **Completado** | 10 ejercicios de procesos, señales, red, scripts Bash, benchmarking e interpretación con IA (con capturas inline). |
-| **08-15 · API, Web UI, Seguridad** | *Pendiente* | Endpoints REST, interfaz web HTML/JS, análisis de capturas Wireshark y proyecto final. |
+| **07 · Ejercicios Prácticos (1-10)** | **Completado** | 10 ejercicios de procesos, señales, red, scripts Bash, benchmarking e interpretación con IA. |
+| **08 · API REST de Ollama** | **Completado** | Endpoints `/api/tags`, `/api/generate` y `/api/chat` validados con cURL (Linux) y PowerShell (Windows). |
+| **09-15 · Web UI, Seguridad, Retos** | *Pendiente* | Interfaz web HTML/JS, análisis de capturas Wireshark y proyecto final. |
 
 ---
 

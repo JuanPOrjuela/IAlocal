@@ -1,0 +1,37 @@
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+=== SECCIÓN 08 - PRUEBA 3: ENDPOINT POST /api/chat ===
+
+=== LLAMADA cURL (Linux / Ubuntu VM) ===
+$ curl http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "asistente-ciberseguridad",
+    "messages": [
+      {"role": "user", "content": "¿Qué es un firewall? Responde de forma técnica y concisa en 3 viñetas."}
+    ],
+    "stream": false
+  }'
+
+=== LLAMADA POWERSHELL (Host Windows - Invoke-RestMethod) ===
+PS C:\Users\Sebas> $chatBody = @{
+    model = "asistente-ciberseguridad"
+    messages = @(
+        @{ role = "user"; content = "¿Qué es un firewall? Responde de forma técnica y concisa en 3 viñetas." }
+    )
+    stream = $false
+} | ConvertTo-Json
+PS C:\Users\Sebas> $chatResp = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/chat" -Method Post -ContentType "application/json" -Body $chatBody
+
+>>> RESPUESTA ESTRUCTURADA POR ROLES (asistente-ciberseguridad) <<<
+Role: assistant
+Content:
+- Definición Técnica: Dispositivo o módulo de software que inspecciona el tráfico de red entrante y saliente según reglas predefinidas.
+- Mecanismo Operativo: Opera en capas 3, 4 y 7 (OSI), filtrando paquetes TCP/IP, bloqueando puertos no autorizados y manteniendo tablas de estado de conexión (Stateful Inspection).
+- Consideración de Seguridad: Constituye la primera línea perimetral de defensa en sistemas operativos y redes frente a intrusiones externas.
+
+>>> METRICAS DEL RUNTIME (asistente-ciberseguridad) <<<
+model             : asistente-ciberseguridad
+total_duration    : 1617769556 ns  (1.61 s)
+prompt_eval_count : 117 tokens (Incluye System Prompt del Modelfile)
+eval_count        : 60 tokens
+Velocidad Cómputo : 54.04 tokens/s
