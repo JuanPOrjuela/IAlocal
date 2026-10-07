@@ -1,4 +1,4 @@
-# Implementacion de IA local en VM con Ollama
+# Implementacion de IA local en VM con Ollama.
 
 - Angel Arcos
 - Sebastian Coral
