@@ -75,3 +75,66 @@ En un entorno virtualizado configurado entre 6 GB y 8 GB de RAM asignada, se pri
 | **Generación de Imágenes (*Diffusion Models*)** | **No recomendado** | La inferencia de modelos como Stable Diffusion mediante CPU en una máquina virtual resulta impráctica debido a tiempos excesivos de cálculo por imagen. |
 
 ---
+
+## 5. Estructura del Repositorio y Entregables del Taller
+
+Este repositorio contiene los archivos de configuración, código fuente, registros técnicos, capturas de pantalla y el informe formal desarrollado para el laboratorio de Sistemas Operativos:
+
+```text
+├── Informe_Taller_IA_Local_Sistemas_Operativos.pdf  # Informe técnico completo de 16 páginas
+├── Modelfiles/                                      # Archivos Modelfile de personalización de IA
+│   ├── Modelfile                                    # Asistente académico de ciberseguridad
+│   ├── Modelfile.t01                                # Variante Temperatura 0.1 (Determinista)
+│   ├── Modelfile.t07                                # Variante Temperatura 0.7 (Balanceada)
+│   └── Modelfile.t10                                # Variante Temperatura 1.0 (Creativa)
+├── Screenshots/                                     # Evidencias visuales de la VM y terminal
+│   ├── 01_Ubuntu_Hardware_Audit.png
+│   ├── 02_Base_Tools_Install.png
+│   ├── 03_Ollama_Install_Official.png
+│   ├── 04_Ollama_Version_Which.png
+│   ├── 05_Ollama_Service_Status.png
+│   ├── 06_API_Tags_Local.png
+│   ├── 07_Ollama_Restart_Logs.png
+│   ├── 08_Network_Port_11434.png
+│   ├── 09_Memory_Baseline_Idle.png
+│   ├── 10_Model_SmolLM2_Pull_Run.png
+│   ├── 11_Model_Qwen25_Pull_Run.png
+│   ├── 12_Model_TinyLlama_Pull_Run.png
+│   ├── 13_Model_Benchmarking_Summary.png
+│   ├── 14_Model_Admin_Show_Cp.png
+│   ├── 15_Model_Admin_Stop_Rm.png
+│   └── vm_desktop_gui.png                           # Entorno gráfico Xubuntu (XFCE) en ejecución
+├── Scripts/                                         # Scripts de generación de informes y pruebas
+│   ├── generate_pdf_report.py
+│   ├── run_section02_hardware.py
+│   ├── run_section03_install.py
+│   ├── run_section04_admin.py
+│   └── run_section05_models.py
+└── Logs/                                            # Salidas crudas de comandos del sistema
+    ├── Sec02_Hardware_Audit.txt
+    ├── Sec03_Install_Verification.txt
+    ├── Sec04_Service_Management.txt
+    ├── Sec05_Models_Execution.txt
+    └── Sec06_Modelfile_Output.txt
+```
+
+---
+
+## 6. Estado Actual de Avance del Laboratorio
+
+| Fase / Sección | Estado | Descripción técnica |
+| :--- | :---: | :--- |
+| **00 · Preparación y Snapshot** | **Completado** | VM Ubuntu 24.04 LTS configurada en VirtualBox con 4 vCPUs, 8 GB RAM, 50 GB VDI y snapshot pre-Ollama. |
+| **01 · Entorno Gráfico (GUI)** | **Completado** | Instalación de `xubuntu-core`, `lightdm`, autologin y VirtualBox Guest Additions. |
+| **02 · Auditoría de Hardware** | **Completado** | Inspección de CPU (`lscpu`), RAM (`free -h`), disco (`lsblk`, `df -h`) y kernel (`uname -a`). |
+| **03 · Instalación de Ollama** | **Completado** | Instalación con script oficial, integración con `systemd`, puerto 11434 y verificación de `/api/tags`. |
+| **04 · Administración de Servicio** | **Completado** | Control con `systemctl`, inspección de sockets con `ss -lntp` y logs con `journalctl`. |
+| **05 · Modelos y Benchmarking** | **Completado** | Despliegue de `smollm2:135m`, `qwen2.5:0.5b` y `tinyllama:latest`. Pruebas de inferencia y administración (`show`, `cp`, `stop`, `rm`). |
+| **06 · Modelfile Personalizado** | **Completado** | Construcción de `asistente-ciberseguridad` y variantes de temperatura (`0.1`, `0.7`, `1.0`). |
+| **07 · Ejercicios Prácticos (1-10)** | *Pendiente* | 10 ejercicios de procesos, señales, red, scripts Bash e interpretación con IA. |
+| **08-15 · API, Web UI, Seguridad** | *Pendiente* | Endpoints REST, interfaz web HTML/JS, análisis de capturas Wireshark y proyecto final. |
+
+---
+
+*Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS*
+*Universidad Sergio Arboleda — Sistemas Operativos*

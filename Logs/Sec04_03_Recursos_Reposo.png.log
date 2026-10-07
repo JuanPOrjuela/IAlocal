@@ -1,0 +1,25 @@
+[2J[H
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+--------------------------------------------------------------------------------
+ubuntu@ubuntu-vm:~$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           7.8Gi       498Mi       4.7Gi       1.0Mi       2.8Gi       7.3Gi
+Swap:             0B          0B          0B
+
+ubuntu@ubuntu-vm:~$ ps aux --sort=-%mem | head -n 10
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root        2503 11.8  0.5 554964 48744 ?        Ssl  22:03   0:08 /usr/libexec/fwupd/fwupd
+ollama      2923  7.6  0.4 1958132 34932 ?       Ssl  22:04   0:00 /usr/local/bin/ollama serve
+root         382  0.1  0.3 354532 27464 ?        SLsl 21:58   0:00 /sbin/multipathd -d -s
+root         940  0.0  0.2 110024 23064 ?        Ssl  21:58   0:00 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+root        2355  0.0  0.2 373096 20704 ?        Ssl  22:02   0:00 /usr/libexec/packagekitd
+root           1  2.2  0.1  22676 13748 ?        Ss   21:58   0:08 /sbin/init
+root         890  0.1  0.1 469068 13692 ?        Ssl  21:58   0:00 /usr/libexec/udisks2/udisksd
+systemd+     595  0.0  0.1  21476 13000 ?        Ss   21:58   0:00 /usr/lib/systemd/systemd-resolved
+root         977  0.1  0.1 392104 12884 ?        Ssl  21:58   0:00 /usr/sbin/ModemManager
+
+ubuntu@ubuntu-vm:~$ pgrep -a ollama
+2923 /usr/local/bin/ollama serve
+
+--------------------------------------------------------------------------------
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS

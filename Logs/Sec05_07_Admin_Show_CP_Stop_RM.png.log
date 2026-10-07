@@ -1,0 +1,45 @@
+[2J[H
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
+--------------------------------------------------------------------------------
+ubuntu@ubuntu-vm:~$ ollama show smollm2:135m | head -n 12
+  Model
+    architecture        llama      
+    parameters          134.52M    
+    context length      8192       
+    embedding length    576        
+    quantization        F16        
+
+  Capabilities
+    completion    
+
+  Parameters
+    stop    "<|im_start|>"    
+
+ubuntu@ubuntu-vm:~$ ollama cp smollm2:135m modelo-copia-seguridad
+copied 'smollm2:135m' to 'modelo-copia-seguridad'
+
+ubuntu@ubuntu-vm:~$ ollama list
+NAME                             ID              SIZE      MODIFIED               
+modelo-copia-seguridad:latest    9077fe9d2ae1    270 MB    Less than a second ago    
+tinyllama:latest                 2644915ede35    637 MB    4 seconds ago             
+qwen2.5:0.5b                     a8b0c5157701    397 MB    32 seconds ago            
+smollm2:135m                     9077fe9d2ae1    270 MB    51 seconds ago            
+
+ubuntu@ubuntu-vm:~$ ollama stop smollm2:135m qwen2.5:0.5b tinyllama
+Error: accepts 1 arg(s), received 3
+
+ubuntu@ubuntu-vm:~$ ollama ps
+NAME            ID              SIZE      PROCESSOR    CONTEXT    UNTIL              
+smollm2:135m    9077fe9d2ae1    382 MB    100% CPU     4096       3 minutes from now    
+
+ubuntu@ubuntu-vm:~$ ollama rm modelo-copia-seguridad
+[?2026h[?25l[1G[K[?25h[?2026l[?25l[2K[1G[?25hdeleted 'modelo-copia-seguridad'
+
+ubuntu@ubuntu-vm:~$ ollama list
+NAME                ID              SIZE      MODIFIED       
+tinyllama:latest    2644915ede35    637 MB    5 seconds ago     
+qwen2.5:0.5b        a8b0c5157701    397 MB    32 seconds ago    
+smollm2:135m        9077fe9d2ae1    270 MB    51 seconds ago    
+
+--------------------------------------------------------------------------------
+Estudiantes: ANDRÉS SEBASTIÁN CORAL VALLEJO, JUAN ORJUELA, JAVIER ROSERO, ANGEL ARCOS
