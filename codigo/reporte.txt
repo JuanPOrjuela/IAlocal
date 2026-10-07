@@ -1,0 +1,16 @@
+=== REPORTE DEL SISTEMA ===
+mié 07 oct 2026 13:23:54 -05
+ubuntu-ollama
+Linux ubuntu-ollama 7.0.0-34-generic #34~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 15:38:29 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+--- CPU ---
+4
+Model name:                              12th Gen Intel(R) Core(TM) i9-12900H
+--- RAM ---
+               total       usado       libre  compartido   búf/caché  disponible
+Mem:           5,8Gi       1,0Gi       3,0Gi        28Mi       2,1Gi       4,8Gi
+Inter:         3,8Gi          0B       3,8Gi
+--- DISCO ---
+S.ficheros     Tamaño Usados  Disp Uso% Montado en
+/dev/sda2         40G    19G   20G  49% /
+--- OLLAMA ---
+active

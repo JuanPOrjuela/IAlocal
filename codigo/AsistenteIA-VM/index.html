@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AsistenteIA-VM</title>
+<style>
+  :root { --bg:#0f1419; --panel:#161c23; --line:#2a333d; --text:#e6e9ec; --muted:#8b96a1; --acc:#3fb68b; --err:#e5534b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  header .estado { font-size:13px; color:var(--muted); }
+  header .estado b.ok { color:var(--acc); }
+  header .estado b.no { color:var(--err); }
+  header select, header button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+  main { max-width:900px; margin:0 auto; padding:16px 20px 140px; }
+  .msg { margin:12px 0; padding:12px 14px; border-radius:8px; background:var(--panel); border:1px solid var(--line); white-space:pre-wrap; }
+  .msg.user { border-left:3px solid #58a6ff; }
+  .msg.assistant { border-left:3px solid var(--acc); }
+  .msg.error { border-left:3px solid var(--err); color:#ffb4ae; }
+  .meta { font-size:12px; color:var(--muted); margin-top:6px; }
+  form { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--line); padding:12px 20px; }
+  form .fila { max-width:900px; margin:0 auto; display:flex; gap:10px; }
+  textarea { flex:1; min-height:60px; resize:vertical; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px; font:inherit; }
+  form button { background:var(--acc); color:#04140d; border:0; border-radius:8px; padding:0 18px; font-weight:600; cursor:pointer; }
+  form button:disabled { opacity:.5; cursor:wait; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AsistenteIA-VM</h1>
+  <label>Modelo <select id="modelo"></select></label>
+  <button id="limpiar" type="button">Nueva conversación</button>
+  <span class="estado" id="estado">Comprobando Ollama…</span>
+</header>
+<main id="chat"></main>
+<form id="form">
+  <div class="fila">
+    <textarea id="pregunta" autofocus placeholder="Escribe tu pregunta… (Ctrl+Enter para enviar)"></textarea>
+    <button id="consultar">Consultar IA</button>
+  </div>
+</form>
+<script>
+  // Proyecto final - Taller de SO: interfaz para la API local de Ollama (/api/chat con historial)
+  const API = "http://localhost:11434";
+  const MODELO_POR_DEFECTO = "asistente-ciberseguridad";
+  const SISTEMA = "Eres un asistente académico de ciberseguridad que corre localmente en una VM Ubuntu. " +
+    "Responde en español, de forma técnica y estructurada. Distingue entre hechos observables, " +
+    "inferencias e información que debe validarse. Nunca solicites credenciales ni datos sensibles. " +
+    "Sé conciso (máximo 200 palabras salvo que se pida más): el modelo corre en CPU.";
+
+  const chat = document.querySelector("#chat");
+  const input = document.querySelector("#pregunta");
+  const boton = document.querySelector("#consultar");
+  const selModelo = document.querySelector("#modelo");
+  const estado = document.querySelector("#estado");
+  let historial = [];
+
+  function pintar(rol, texto) {
+    const div = document.createElement("div");
+    div.className = "msg " + rol;
+    div.textContent = texto;
+    chat.appendChild(div);
+    div.scrollIntoView({ behavior: "smooth", block: "end" });
+    return div;
+  }
+
+  async function cargarModelos() {
+    try {
+      const res = await fetch(API + "/api/tags");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const { models } = await res.json();
+      selModelo.innerHTML = "";
+      for (const m of models) selModelo.add(new Option(`${m.name} (${(m.size / 1e9).toFixed(1)} GB)`, m.name));
+      const pref = models.find(m => m.name.startsWith(MODELO_POR_DEFECTO));
+      if (pref) selModelo.value = pref.name;
+      estado.innerHTML = `<b class="ok">● Ollama activo</b> · ${models.length} modelos locales`;
+    } catch (e) {
+      estado.innerHTML = `<b class="no">● Sin conexión con Ollama</b> (${e.message}). Revisa: systemctl status ollama`;
+    }
+  }
+
+  async function consultar(ev) {
+    ev.preventDefault();
+    const prompt = input.value.trim();
+    if (!prompt) return;
+    if (!selModelo.value) { pintar("error", "No hay modelos disponibles. Ejecuta: ollama pull <modelo>"); return; }
+    input.value = "";
+    pintar("user", prompt);
+    historial.push({ role: "user", content: prompt });
+    boton.disabled = true;
+    const burbuja = pintar("assistant", "Consultando… (cargando el modelo y leyendo la pregunta)");
+    const t0 = performance.now();
+    const ctrl = new AbortController();
+    // Límite por inactividad, no total: en CPU una respuesta larga puede tardar minutos,
+    // pero si pasan 90 s sin recibir ningún fragmento se considera que algo falló.
+    let limite = setTimeout(() => ctrl.abort(), 90000);
+    const reiniciarLimite = () => { clearTimeout(limite); limite = setTimeout(() => ctrl.abort(), 90000); };
+    let texto = "";
+    try {
+      const res = await fetch(API + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          model: selModelo.value,
+          messages: [{ role: "system", content: SISTEMA }, ...historial],
+          stream: true
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      // Con stream: true Ollama responde NDJSON: un objeto JSON por línea con un fragmento del mensaje
+      const lector = res.body.getReader();
+      const dec = new TextDecoder();
+      let buffer = "", final = null;
+      while (true) {
+        const { value, done } = await lector.read();
+        if (done) break;
+        reiniciarLimite();
+        buffer += dec.decode(value, { stream: true });
+        const lineas = buffer.split("\n");
+        buffer = lineas.pop();
+        for (const l of lineas) {
+          if (!l.trim()) continue;
+          const parte = JSON.parse(l);
+          if (parte.error) throw new Error(parte.error);
+          texto += parte.message?.content ?? "";
+          burbuja.textContent = texto;
+          if (parte.done) final = parte;
+        }
+        burbuja.scrollIntoView({ block: "end" });
+      }
+      if (!final) throw new Error("la respuesta terminó incompleta");
+      historial.push({ role: "assistant", content: texto });
+      const seg = ((performance.now() - t0) / 1000).toFixed(1);
+      const tps = final.eval_count && final.eval_duration ? (final.eval_count / (final.eval_duration / 1e9)).toFixed(1) : "?";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${final.model} · ${seg} s · ${final.eval_count ?? "?"} tokens · ${tps} tokens/s · mensajes en historial: ${historial.length}`;
+      burbuja.appendChild(meta);
+      console.log("[AsistenteIA-VM]", { modelo: final.model, segundos: seg, tokens: final.eval_count, tps });
+    } catch (e) {
+      historial.pop(); // la pregunta sin respuesta no queda en el historial
+      burbuja.className = "msg error";
+      burbuja.textContent = (texto ? texto + "\n\n" : "") + "No fue posible completar la consulta con Ollama: " +
+        (e.name === "AbortError" ? "tiempo de espera agotado (90 s sin recibir datos)" : e.message);
+    } finally {
+      clearTimeout(limite);
+      boton.disabled = false;
+      input.focus();
+    }
+  }
+
+  document.querySelector("#form").addEventListener("submit", consultar);
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && e.ctrlKey) consultar(e); });
+  document.querySelector("#limpiar").addEventListener("click", () => { historial = []; chat.innerHTML = ""; input.focus(); });
+  cargarModelos();
+</script>
+</body>
+</html>

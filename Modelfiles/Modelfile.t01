@@ -1,4 +1,0 @@
-FROM qwen2.5:0.5b
-PARAMETER temperature 0.1
-PARAMETER num_ctx 4096
-SYSTEM """Eres un asistente acad?mico en ciberseguridad. Responde t?cnico y conciso."""
